@@ -34,7 +34,7 @@ jobs:
             docker stop campus-rally || true
             docker rm campus-rally || true
             ghcr.io/wiomoc/campus-rally@${{ steps.docker_build_push.outputs.digest }}
-            docker run -d --name appus-backend \
+            docker run -d --name campus-rally \
               --restart=unless-stopped \
               -v /home/ubuntu/rallydata:/app/data \
               -l "traefik.enable=true" \
@@ -44,6 +44,7 @@ jobs:
               -l "traefik.http.services.rally.loadbalancer.server.port=8080" \
               -l "traefik.http.routers.rally.service=rally" \
               -l "traefik.docker.network=web" \
+              -e HOSTNAME=rally.wiomoc.de \
               --network=web \
               ghcr.io/wiomoc/campus-rally@${{ steps.docker_build_push.outputs.digest }}
             docker image prune -a --filter "until=24h" -f
