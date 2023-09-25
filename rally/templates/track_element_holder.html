@@ -1,0 +1,6 @@
+{% extends base_template %}
+{% block main %}
+<div hx-ext="ws" ws-connect="/ws?group_id={{group_id|urlencode}}">
+    {{content}}
+</div>
+{% endblock %}

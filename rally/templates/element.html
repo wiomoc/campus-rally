@@ -1,0 +1,98 @@
+<div id="element">
+    <h2>QR-Code</h2>
+    <h3>{{text}}</h3>
+    <div id="error"></div>
+
+    {% if type == "qr_code" %}
+    <video id="qr-video"></video>
+    {% endif %}
+
+    <form ws-send id="answer-form">
+        {% if type == "qr_code" %}
+        <input type="hidden" name="answer" id="answer-form-input">
+        {% elif type == "mandatory_question" or type == "optional_question" %}
+        <input type="text" name="answer" id="answer-form-input">
+        {% endif %}
+        <input type="hidden" name="element_id" value="{{id}}">
+
+
+        {% if type == "mandatory_question" or type == "optional_question" %}
+        <button type="submit">Starten</button>
+        {% elif type == "story" or type == "start" %}
+        <button type="submit">Weiter</button>
+        {% endif %}
+    </form>
+    {% if type == "qr_code" %}
+    <script>
+        if(qrScanner) {
+            try {
+                qrScanner.stop()
+                qrScanner.destroy()
+            } catch (e) {
+            }
+        }
+
+        var qrScanner = new QrScanner(
+            document.getElementById('qr-video'),
+            result => {
+                console.log(result)
+                qrScanner.stop()
+                document.getElementById("answer-form-input").value = result.data
+                htmx.trigger("#answer-form", "submit")
+                const swapListener = (evt) => {
+                    console.log(evt.detail)
+                    if(evt.detail.target.id == "error") {
+                        setTimeout(() => {
+                            qrScanner.start()
+                        }, 1000)
+                    } else {
+                        qrScanner.destroy()
+                    }
+                    htmx.off("htmx:oobAfterSwap", swapListener)
+                }
+
+               htmx.on("htmx:oobAfterSwap", swapListener)
+            },
+            {
+                highlightScanRegion: true,
+                highlightCodeOutline: true,
+            }
+            // No options provided. This will use the old api and is deprecated in the current version until next major version.
+        );
+
+        qrScanner.start()
+    </script>
+    {% endif %}
+
+
+    {% if location %}
+    <div id="map"></div>
+
+    <script>
+        const mapEl = document.getElementById("map")
+        const map = L.map(mapEl).setView([{{location.latitude}},{{location.longitude}}], 17);
+        L.tileLayer('https://lageplan.uni-stuttgart.de/osm_tiles/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        L.marker([{{location.latitude}},{{location.longitude}}]).addTo(map);
+
+
+
+        let locationCircle = null
+        map.on('locationfound', (e) => {
+            if (locationCircle) {
+                map.removeLayer(locationCircle)
+            }
+            locationCircle = L.circle(e.latlng, e.accuracy).addTo(map);
+        });
+
+        map.locate({maxZoom: 18, enableHighAccuracy: true, watch: true});
+    </script>
+    {% endif %}
+
+    <div>ID: {{id}}</div>
+
+</div>
+

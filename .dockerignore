@@ -1,0 +1,5 @@
+collected_static_files/
+static/node_modules
+.idea/
+venv/
+data/db.sqlite3

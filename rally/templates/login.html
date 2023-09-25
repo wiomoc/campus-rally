@@ -1,0 +1,14 @@
+{% extends base_template %}
+
+{% block main %}
+<div style="display: flex; flex-direction: column; align-items: center">
+    {% if error %}
+    <h2 id="error">{{error}}</h2>
+    {% endif %}
+    <form hx-post="/" hx-target="#main" hx-swap="outerHTML">
+        {% csrf_token %}
+        <input type="text" autocomplete="false" name="group_id" placeholder="Gruppen-ID">
+        <button type="submit">Starten</button>
+    </form>
+</div>
+{% endblock %}

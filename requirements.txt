@@ -1,0 +1,7 @@
+Django==4.2.5
+django-htmx==1.16.0
+PyYAML==6.0.1
+channels[daphne]==4.0.0
+reportlab==4.0.5
+reportlab-qrcode==0.1.4
+uvicorn[standard]==0.23.2

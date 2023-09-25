@@ -1,0 +1,19 @@
+qr_salt: "my_salt"
+
+start_message: Hello
+end_message: Goodbye
+
+elements:
+  - id: "station1"
+    type: "qr_code"
+    text: "Station 1"
+  - id: "station2"
+    type: "story"
+    text: "Station 2"
+    location:
+        latitude: 48.745
+        longitude: 9.107
+  - id: "station3"
+    type: "qr_code"
+    text: "Station 3"
+    hint: "bla"

@@ -1,0 +1,5 @@
+data/
+!data/track.yaml
+collected_static_files/
+*.pdf
+static/node_modules
