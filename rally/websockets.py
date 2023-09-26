@@ -1,28 +1,35 @@
+import asyncio
 import json
 from urllib.parse import parse_qs
 
-from channels.generic.websocket import WebsocketConsumer
+from channels.generic.websocket import WebsocketConsumer, AsyncWebsocketConsumer
 
 from .models import Group
 from .views import render_track_element
 from .track_controller import track_controller
 
 
-class GroupConsumer(WebsocketConsumer):
+class GroupConsumer(AsyncWebsocketConsumer):
 
-    def connect(self):
+    async def connect(self):
         group_id = parse_qs(self.scope["query_string"].decode("utf8"))["group_id"][0]
-        self.group = Group.objects.get(public_id=group_id)
-        self.accept()
+        self.group = await asyncio.to_thread(lambda: Group.objects.get(public_id=group_id))
+        await self.channel_layer.group_add(group_id, self.channel_name)
+        await self.accept()
 
-    def disconnect(self, close_code):
-        pass
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.group.public_id, self.channel_name)
 
-    def receive(self, text_data):
+    async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        print(text_data_json)
-        next_element_or_error = track_controller.process_answer(text_data_json["element_id"], self.group, text_data_json.get("answer"))
+        next_element_or_error = await asyncio.to_thread(lambda: track_controller.process_answer(
+            text_data_json["element_id"], self.group, text_data_json.get("answer")))
         if isinstance(next_element_or_error, str):
-            self.send(text_data='<h4 id="error" hx-swap-oob="true">' + next_element_or_error + "</h1>")
+            await self.send(text_data='<h4 id="error" hx-swap-oob="true">' + next_element_or_error + "</h1>")
         else:
-            self.send(text_data=render_track_element(next_element_or_error))
+            await self.channel_layer.group_send(
+                self.group.public_id, {"type": "state.update", "message": render_track_element(next_element_or_error)}
+            )
+
+    async def state_update(self, event):
+        await self.send(text_data=event["message"])

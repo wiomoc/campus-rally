@@ -35,7 +35,7 @@ class TrackElement:
 class TrackController:
 
     def __init__(self):
-        config = safe_load(open("data/track.yaml", "r"))
+        config = safe_load(open("data/track.yaml", "rb"))
 
         self.qr_salt = config["qr_salt"]
         self.start_track_element = TrackElement(
@@ -61,14 +61,16 @@ class TrackController:
 
         self.track_element_indexes = {element.id: index for index, element in enumerate(self.track_elements)}
 
-    def get_current_element(self, group: Group) -> Tuple[Optional[int], TrackElement]:
+    def get_current_element(self, group: Group) -> Optional[Tuple[Optional[int], TrackElement]]:
         current_element_id = group.current_element_id
         if current_element_id == self.start_track_element.id:
             return None, self.start_track_element
         elif current_element_id == self.end_track_element.id:
             return None, self.end_track_element
         else:
-            current_element_index = self.track_element_indexes[current_element_id]
+            current_element_index = self.track_element_indexes.get(current_element_id)
+            if current_element_index is None:
+                return None
             return current_element_index, self.track_elements[current_element_index]
 
     def process_answer(self, element_id: str, group: Group, answer: Optional[str]) -> Union[TrackElement, str]:
@@ -109,13 +111,15 @@ class TrackController:
         group.save()
         return next_element
 
-    def get_progress(self, group: Group):
+    def get_progress(self, group: Group) -> float:
         if group.current_element_id == self.start_track_element.id:
             return 0
         elif group.current_element_id == self.end_track_element.id:
             return 1
         else:
-            current_index = self.track_element_indexes[group.current_element_id]
+            current_index = self.track_element_indexes.get(group.current_element_id)
+            if current_index is None:
+                return -1
             offset = self.track_element_indexes[group.starting_element_id]
             if current_index < offset:
                 current_index += len(self.track_elements)

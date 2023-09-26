@@ -1,3 +1,5 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.contrib import admin
 from django.db import models
 from django.forms import ModelForm, ChoiceField, Media
@@ -6,6 +8,7 @@ from django.utils.safestring import SafeString
 
 from .models import Group, TrackElementGroupAnswer
 from .track_controller import track_controller
+from .views import render_track_element
 
 
 class GroupForm(ModelForm):
@@ -42,6 +45,14 @@ class GroupAdmin(admin.ModelAdmin):
     def progress(self, obj):
         from rally.track_controller import track_controller
         return f"{track_controller.get_progress(obj) * 100:0.1f} %"
+
+    def save_form(self, request, form, change):
+        obj = super().save_form(request, form, change)
+        if "current_element_id" in form.changed_data:
+            async_to_sync(get_channel_layer().group_send)(obj.public_id,
+                                           {"type": "state.update",
+                                            "message": render_track_element(track_controller.get_current_element(obj)[1])})
+        return obj
 
 
 admin.site.register(Group, GroupAdmin)

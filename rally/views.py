@@ -15,8 +15,11 @@ class HtmxHttpRequest(HttpRequest):
 
 
 def render_track_element(track_element: TrackElement):
-    return loader.render_to_string("element.html", {**asdict(track_element), "type": track_element.type.value})
-
+    return loader.render_to_string("element.html", {"id": track_element.id,
+                                                    "type": track_element.type.value,
+                                                    "text": SafeString(track_element.text),
+                                                    "hint": track_element.hint,
+                                                    "location": track_element.location})
 
 
 def index(request: HtmxHttpRequest) -> HttpResponse:
